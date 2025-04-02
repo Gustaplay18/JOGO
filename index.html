@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desbugue a Dupla - O Jogo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #5e17eb;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .game-area {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .game-canvas {
+            width: 600px;
+            height: 400px;
+            border: 2px solid #5e17eb;
+            border-radius: 5px;
+            margin: 0 auto;
+            background-color: #e8e8ff;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .player {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.05s ease;
+        }
+        
+        #player1 {
+            background-color: #5e17eb;
+            border: 2px solid #3a0ca3;
+            left: 50px;
+            top: 50px;
+        }
+        
+        #player2 {
+            background-color: #ff6b6b;
+            border: 2px solid #c43c3c;
+            left: 50px;
+            top: 300px;
+        }
+        
+        .objective {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            background-color: #00b894;
+            border: 2px solid #008068;
+            position: absolute;
+            right: 60px;
+            top: 185px;
+        }
+        
+        .obstacle {
+            position: absolute;
+            background-color: #2d3436;
+            border-radius: 5px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .control-panel {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            width: 45%;
+        }
+        
+        .control-panel h3 {
+            margin-top: 0;
+            color: #5e17eb;
+        }
+        
+        .control-keys {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 5px;
+            margin: 10px auto;
+            width: 120px;
+        }
+        
+        .key {
+            background-color: #eee;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            padding: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .key:hover {
+            background-color: #ddd;
+        }
+        
+        .key:active {
+            background-color: #ccc;
+        }
+        
+        .empty-key {
+            visibility: hidden;
+        }
+        
+        .score {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .phase-indicator {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            color: #5e17eb;
+        }
+        
+        .bug-indicator {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background-color: rgba(255, 107, 107, 0.8);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .instructions {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .instructions h2 {
+            color: #5e17eb;
+            margin-top: 0;
+        }
+        
+        button {
+            background-color: #5e17eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+        }
+        
+        button:hover {
+            background-color: #4a12c4;
+        }
+        
+        .victory {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            text-align: center;
+        }
+        
+        .victory h2 {
+            color: #00b894;
+            margin-top: 0;
+        }
+        
+        .bug-meter {
+            width: 100%;
+            height: 20px;
+            background-color: #eee;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .bug-progress {
+            height: 100%;
+            background-color: #ff6b6b;
+            width: 100%;
+            transition: width 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Desbugue a Dupla</h1>
+        <p class="subtitle">Trabalhe em equipe para superar os bugs!</p>
+        
+        <div class="instructions">
+            <h2>Como Jogar</h2>
+            <p>Os controles dos jogadores estão bugados e trocados! Coordene suas ações para guiar ambos os personagens até o objetivo verde.</p>
+            <p><strong>Jogador 1 (Roxo):</strong> Use as teclas WASD (ou clique nos botões virtuais)... mas cuidado, você pode estar controlando o Jogador 2!</p>
+            <p><strong>Jogador 2 (Vermelho):</strong> Use as teclas IJKL (ou clique nos botões virtuais)... mas cuidado, você pode estar controlando o Jogador 1!</p>
+            <p><strong>Objetivo:</strong> Guie os dois jogadores até o quadrado verde, evitando os obstáculos. A cada fase, os controles mudam!</p>
+        </div>
+        
+        <div class="game-area">
+            <div class="game-canvas" id="gameCanvas">
+                <div class="player" id="player1"></div>
+                <div class="player" id="player2"></div>
+                <div class="objective" id="objective"></div>
+                <div class="phase-indicator">Fase 1</div>
+                <div class="bug-indicator">Controles Bugados!</div>
+                <div class="victory" id="victoryScreen">
+                    <h2>Fase Completa!</h2>
+                    <p>Vocês conseguiram trabalhar juntos!</p>
+                    <p>Atual nível de bug: <span id="bugLevel">100%</span></p>
+                    <div class="bug-meter">
+                        <div class="bug-progress" id="bugProgress"></div>
+                    </div>
+                    <button id="nextPhaseBtn">Próxima Fase</button>
+                </div>
+            </div>
+            
+            <div class="score">Fase: <span id="phaseDisplay">1</span> | Desbugando: <span id="bugPercentage">0%</span></div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-panel">
+                <h3>Jogador 1 (Roxo)</h3>
+                <div class="control-keys">
+                    <div class="empty-key"></div>
+                    <div class="key" id="p1Up">W</div>
+                    <div class="empty-key"></div>
+                    <div class="key" id="p1Left">A</div>
+                    <div class="key" id="p1Down">S</div>
+                    <div class="key" id="p1Right">D</div>
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <h3>Jogador 2 (Vermelho)</h3>
+                <div class="control-keys">
+                    <div class="empty-key"></div>
+                    <div class="key" id="p2Up">I</div>
+                    <div class="empty-key"></div>
+                    <div class="key" id="p2Left">J</div>
+                    <div class="key" id="p2Down">K</div>
+                    <div class="key" id="p2Right">L</div>
+                </div>
+            </div>
+        </div>
+        
+        <button id="resetButton">Reiniciar Jogo</button>
+        <button id="swapControlsButton">Trocar Controles Temporariamente</button>
+    </div>
+
+    <script>
+        // Configurações do jogo
+        const gameCanvas = document.getElementById('gameCanvas');
+        const player1 = document.getElementById('player1');
+        const player2 = document.getElementById('player2');
+        const objective = document.getElementById('objective');
+        const victoryScreen = document.getElementById('victoryScreen');
+        const nextPhaseBtn = document.getElementById('nextPhaseBtn');
+        const resetButton = document.getElementById('resetButton');
+        const swapControlsButton = document.getElementById('swapControlsButton');
+        const phaseDisplay = document.getElementById('phaseDisplay');
+        const bugPercentage = document.getElementById('bugPercentage');
+        const bugLevel = document.getElementById('bugLevel');
+        const bugProgress = document.getElementById('bugProgress');
+        
+        let currentPhase = 1;
+        let maxPhases = 3;
+        let bugPercent = 100;
+        let controlsSwapped = true; // Inicialmente bugado
+        let temporarySwap = false;
+        let temporarySwapTimeout = null;
+        
+        // Posições iniciais
+        let positions = {
+            player1: { x: 50, y: 50 },
+            player2: { x: 50, y: 300 }
+        };
+        
+        // Velocidade de movimento
+        const moveSpeed = 5;
+        
+        // Estados das teclas
+        const keys = {
+            player1: { up: false, down: false, left: false, right: false },
+            player2: { up: false, down: false, left: false, right: false }
+        };
+        
+        // Criar obstáculos baseados na fase atual
+        function createObstacles(phase) {
+            // Remover obstáculos anteriores
+            document.querySelectorAll('.obstacle').forEach(obs => obs.remove());
+            
+            let obstacles = [];
+            
+            if (phase === 1) {
+                obstacles = [
+                    { x: 200, y: 100, width: 200, height: 20 },
+                    { x: 200, y: 280, width: 200, height: 20 }
+                ];
+            } else if (phase === 2) {
+                obstacles = [
+                    { x: 150, y: 50, width: 20, height: 300 },
+                    { x: 300, y: 0, width: 20, height: 250 },
+                    { x: 450, y: 150, width: 20, height: 250 }
+                ];
+            } else if (phase === 3) {
+                obstacles = [
+                    { x: 150, y: 100, width: 300, height: 20 },
+                    { x: 150, y: 280, width: 300, height: 20 },
+                    { x: 200, y: 180, width: 200, height: 40 }
+                ];
+            }
+            
+            // Criar os elementos de obstáculo
+            obstacles.forEach(obs => {
+                const obstacle = document.createElement('div');
+                obstacle.className = 'obstacle';
+                obstacle.style.left = `${obs.x}px`;
+                obstacle.style.top = `${obs.y}px`;
+                obstacle.style.width = `${obs.width}px`;
+                obstacle.style.height = `${obs.height}px`;
+                gameCanvas.appendChild(obstacle);
+            });
+            
+            return obstacles;
+        }
+        
+        // Configurar fase
+        function setupPhase(phase) {
+            currentPhase = phase;
+            phaseDisplay.textContent = phase;
+            document.querySelector('.phase-indicator').textContent = `Fase ${phase}`;
+            
+            // Definir posições iniciais com base na fase
+            if (phase === 1) {
+                positions.player1 = { x: 50, y: 50 };
+                positions.player2 = { x: 50, y: 300 };
+                objective.style.right = '60px';
+                objective.style.top = '185px';
+            } else if (phase === 2) {
+                positions.player1 = { x: 50, y: 50 };
+                positions.player2 = { x: 50, y: 300 };
+                objective.style.right = '50px';
+                objective.style.top = '50px';
+            } else if (phase === 3) {
+                positions.player1 = { x: 50, y: 50 };
+                positions.player2 = { x: 50, y: 300 };
+                objective.style.right = '60px';
+                objective.style.top = '185px';
+            }
+            
+            // Aplicar posições iniciais
+            player1.style.left = `${positions.player1.x}px`;
+            player1.style.top = `${positions.player1.y}px`;
+            player2.style.left = `${positions.player2.x}px`;
+            player2.style.top = `${positions.player2.y}px`;
+            
+            // Criar obstáculos para a fase atual
+            const obstacles = createObstacles(phase);
+            
+            // Ajustar nível de bug com base na fase
+            if (phase === 1) {
+                bugPercent = 100;
+                controlsSwapped = true;
+            } else if (phase === 2) {
+                bugPercent = 70;
+                // 70% de chance de controles trocados a cada movimento
+            } else if (phase === 3) {
+                bugPercent = 40;
+                // 40% de chance de controles trocados a cada movimento
+            }
+            
+            updateBugDisplay();
+        }
+        
+        // Atualizar display de bug
+        function updateBugDisplay() {
+            bugPercentage.textContent = `${100 - bugPercent}%`;
+            bugLevel.textContent = `${bugPercent}%`;
+            bugProgress.style.width = `${bugPercent}%`;
+        }
+        
+        // Verificar colisão com obstáculos
+        function checkObstacleCollision(playerElement, newX, newY) {
+            const playerRect = {
+                x: newX,
+                y: newY,
+                width: 40,
+                height: 40
+            };
+            
+            let collision = false;
+            
+            document.querySelectorAll('.obstacle').forEach(obs => {
+                const obsRect = obs.getBoundingClientRect();
+                const gameRect = gameCanvas.getBoundingClientRect();
+                
+                const adjustedObsRect = {
+                    x: obsRect.left - gameRect.left,
+                    y: obsRect.top - gameRect.top,
+                    width: obsRect.width,
+                    height: obsRect.height
+                };
+                
+                if (
+                    playerRect.x < adjustedObsRect.x + adjustedObsRect.width &&
+                    playerRect.x + playerRect.width > adjustedObsRect.x &&
+                    playerRect.y < adjustedObsRect.y + adjustedObsRect.height &&
+                    playerRect.y + playerRect.height > adjustedObsRect.y
+                ) {
+                    collision = true;
+                }
+            });
+            
+            // Verificar colisão com bordas do canvas
+            if (
+                newX < 0 ||
+                newX + 40 > gameCanvas.offsetWidth ||
+                newY < 0 ||
+                newY + 40 > gameCanvas.offsetHeight
+            ) {
+                collision = true;
+            }
+            
+            return collision;
+        }
+        
+        // Verificar objetivo alcançado
+        function checkObjectiveReached() {
+            const player1Rect = player1.getBoundingClientRect();
+            const player2Rect = player2.getBoundingClientRect();
+            const objectiveRect = objective.getBoundingClientRect();
+            const gameRect = gameCanvas.getBoundingClientRect();
+            
+            const p1NearObjective = isNearObjective(player1Rect, objectiveRect, gameRect);
+            const p2NearObjective = isNearObjective(player2Rect, objectiveRect, gameRect);
+            
+            if (p1NearObjective && p2NearObjective) {
+                // Ambos jogadores alcançaram o objetivo
+                victoryScreen.style.display = 'block';
+                
+                // Reduzir bug para a próxima fase
+                bugPercent = Math.max(0, bugPercent - 30);
+                updateBugDisplay();
+            }
+        }
+        
+        function isNearObjective(playerRect, objectiveRect, gameRect) {
+            const playerCenter = {
+                x: playerRect.left + playerRect.width / 2 - gameRect.left,
+                y: playerRect.top + playerRect.height / 2 - gameRect.top
+            };
+            
+            const objectiveCenter = {
+                x: objectiveRect.left + objectiveRect.width / 2 - gameRect.left,
+                y: objectiveRect.top + objectiveRect.height / 2 - gameRect.top
+            };
+            
+            const distance = Math.sqrt(
+                Math.pow(playerCenter.x - objectiveCenter.x, 2) +
+                Math.pow(playerCenter.y - objectiveCenter.y, 2)
+            );
+            
+            return distance < 40; // Distância para considerar "perto"
+        }
+        
+        // Mover jogador
+        function movePlayer(player, playerElement, directions) {
+            let newX = positions[player].x;
+            let newY = positions[player].y;
+            
+            if (directions.up) newY -= moveSpeed;
+            if (directions.down) newY += moveSpeed;
+            if (directions.left) newX -= moveSpeed;
+            if (directions.right) newX += moveSpeed;
+            
+            // Verificar colisão antes de mover
+            if (!checkObstacleCollision(playerElement, newX, newY)) {
+                positions[player].x = newX;
+                positions[player].y = newY;
+                playerElement.style.left = `${newX}px`;
+                playerElement.style.top = `${newY}px`;
+            }
+            
+            // Verificar se objetivo foi alcançado
+            checkObjectiveReached();
+            
+            // Em fases avançadas, chance de trocar controles durante o jogo
+            if (currentPhase > 1 && !temporarySwap) {
+                if (Math.random() * 100 < bugPercent / 2) {
+                    controlsSwapped = !controlsSwapped;
+                    document.querySelector('.bug-indicator').textContent = 
+                        controlsSwapped ? 'Controles Bugados!' : 'Controles Normais!';
+                }
+            }
+        }
+        
+        // Loop do jogo
+        function gameLoop() {
+            // Determinar quais direções aplicar com base no estado de troca
+            let p1Directions, p2Directions;
+            
+            if ((controlsSwapped && !temporarySwap) || (!controlsSwapped && temporarySwap)) {
+                // Controles trocados
+                p1Directions = keys.player2;
+                p2Directions = keys.player1;
+            } else {
+                // Controles normais
+                p1Directions = keys.player1;
+                p2Directions = keys.player2;
+            }
+            
+            // Mover jogadores
+            movePlayer('player1', player1, p1Directions);
+            movePlayer('player2', player2, p2Directions);
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Tratar eventos de teclado
+        document.addEventListener('keydown', function(e) {
+            handleKeyEvent(e.key.toLowerCase(), true);
+        });
+        
+        document.addEventListener('keyup', function(e) {
+            handleKeyEvent(e.key.toLowerCase(), false);
+        });
+        
+        function handleKeyEvent(key, isDown) {
+            // Jogador 1 (WASD)
+            if (key === 'w') keys.player1.up = isDown;
+            if (key === 's') keys.player1.down = isDown;
+            if (key === 'a') keys.player1.left = isDown;
+            if (key === 'd') keys.player1.right = isDown;
+            
+            // Jogador 2 (IJKL)
+            if (key === 'i') keys.player2.up = isDown;
+            if (key === 'k') keys.player2.down = isDown;
+            if (key === 'j') keys.player2.left = isDown;
+            if (key === 'l') keys.player2.right = isDown;
+        }
+        
+        // Configurar controles de botões virtuais
+        document.getElementById('p1Up').addEventListener('mousedown', () => keys.player1.up = true);
+        document.getElementById('p1Down').addEventListener('mousedown', () => keys.player1.down = true);
+        document.getElementById('p1Left').addEventListener('mousedown', () => keys.player1.left = true);
+        document.getElementById('p1Right').addEventListener('mousedown', () => keys.player1.right = true);
+        
+        document.getElementById('p2Up').addEventListener('mousedown', () => keys.player2.up = true);
+        document.getElementById('p2Down').addEventListener('mousedown', () => keys.player2.down = true);
+        document.getElementById('p2Left').addEventListener('mousedown', () => keys.player2.left = true);
+        document.getElementById('p2Right').addEventListener('mousedown', () => keys.player2.right = true);
+        
+        document.querySelectorAll('.key').forEach(key => {
+            key.addEventListener('mouseup', () => {
+                // Resetar todas as teclas quando soltar o mouse
+                keys.player1.up = false;
+                keys.player1.down = false;
+                keys.player1.left = false;
+                keys.player1.right = false;
+                keys.player2.up = false;
+                keys.player2.down = false;
+                keys.player2.left = false;
+                keys.player2.right = false;
+            });
+            
+            // Impedir arrastar seleção de texto
+            key.addEventListener('mousedown', e => e.preventDefault());
+        });
+        
+        // Botão para próxima fase
+        nextPhaseBtn.addEventListener('click', function() {
+            victoryScreen.style.display = 'none';
+            if (currentPhase < maxPhases) {
+                setupPhase(currentPhase + 1);
+            } else {
+                // Jogo completo!
+                victoryScreen.querySelector('h2').textContent = 'Jogo Completo!';
+                victoryScreen.querySelector('p').textContent = 'Parabéns! Vocês desbugaram o jogo!';
+                bugPercent = 0;
+                updateBugDisplay();
+                victoryScreen.style.display = 'block';
+                nextPhaseBtn.textContent = 'Jogar Novamente';
+                nextPhaseBtn.onclick = function() {
+                    victoryScreen.style.display = 'none';
+                    setupPhase(1);
+                    nextPhaseBtn.textContent = 'Próxima Fase';
+                    victoryScreen.querySelector('h2').textContent = 'Fase Completa!';
+                    victoryScreen.querySelector('p').textContent = 'Vocês conseguiram trabalhar juntos!';
+                };
+            }
+        });
+        
+        // Botão de reiniciar
+        resetButton.addEventListener('click', function() {
+            victoryScreen.style.display = 'none';
+            setupPhase(1);
+        });
+        
+        // Botão de trocar controles temporariamente
+        swapControlsButton.addEventListener('click', function() {
+            if (temporarySwapTimeout) {
+                clearTimeout(temporarySwapTimeout);
+            }
+            
+            temporarySwap = true;
+            swapControlsButton.disabled = true;
+            swapControlsButton.textContent = 'Controles Trocados (3s)';
+            
+            let timeLeft = 3;
+            const countdownInterval = setInterval(() => {
+                timeLeft--;
+                swapControlsButton.textContent = `Controles Trocados (${timeLeft}s)`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
+            
+            temporarySwapTimeout = setTimeout(() => {
+                temporarySwap = false;
+                swapControlsButton.disabled = false;
+                swapControlsButton.textContent = 'Trocar Controles Temporariamente';
+                clearInterval(countdownInterval);
+            }, 3000);
+        });
+        
+        // Iniciar jogo
+        setupPhase(1);
+        gameLoop();
+    </script>
+</body>
+</html>
